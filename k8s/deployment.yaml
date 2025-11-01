@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
       - name: python-microservice
-        image: <ACR_LOGIN_SERVER>/python-microservice:latest
+        image: acrmicroservicepwc.azurecr.io/python-microservice:latest
         ports:
         - containerPort: 5000
