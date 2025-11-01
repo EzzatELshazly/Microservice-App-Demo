@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: python-microservice-ingress
   namespace: microservice
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
@@ -19,4 +17,5 @@ spec:
             port:
 
               number: 80
+
 
