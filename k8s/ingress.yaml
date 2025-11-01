@@ -15,7 +15,8 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: python-microservice-svc
+            name: python-microservice-service
             port:
 
               number: 80
+
