@@ -1,0 +1,105 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACR_NAME: acrmicroservicepwc
+  ACR_LOGIN_SERVER: acrmicroservicepwc.azurecr.io
+  IMAGE_NAME: python-microservice
+  K8S_DEPLOYMENT_FILE: k8s/deployment.yaml
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set-tag.outputs.tag }}
+    
+    steps:
+      # Step 1: Clone the repository code to the runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Generate image tag using branch name and commit SHA
+      - name: Set image tag
+        id: set-tag
+        run: |
+          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^a-zA-Z0-9._-]/-/g')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          TAG="${BRANCH_NAME}-${SHORT_SHA}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Generated image tag: ${TAG}"
+
+      # Step 3: Authenticate to Azure Container Registry
+      - name: Azure Container Registry Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # Step 4: Prepare Docker Buildx for multi-platform builds and caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 5: Build Docker image and push to ACR with caching
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      # Step 6: Display build completion information
+      - name: Build summary
+        run: |
+          echo "Image built and pushed successfully"
+          echo "Image: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}"
+
+  update-manifest:
+    name: Update Kubernetes Manifest
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      # Step 1: Clone the repository with write permissions
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Update the image tag in Kubernetes deployment file
+      - name: Update deployment image tag
+        run: |
+          IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }}
+          NEW_IMAGE="${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}"
+          echo "Updating image to: ${NEW_IMAGE}"
+          
+          sed -i "s|image:.*${{ env.IMAGE_NAME }}.*|image: ${NEW_IMAGE}|g" ${{ env.K8S_DEPLOYMENT_FILE }}
+
+          echo "Updated deployment file:"
+          grep "image:" ${{ env.K8S_DEPLOYMENT_FILE }}
+
+      # Step 3: Commit and push the manifest changes to trigger ArgoCD sync
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.K8S_DEPLOYMENT_FILE }}
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update image tag to ${{ needs.build-and-push.outputs.image-tag }}"
+            git push
+            echo "Manifest updated and pushed"
+          fi
