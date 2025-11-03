@@ -146,11 +146,11 @@ terraform init -migrate-state
 <img width="1406" height="758" alt="terraform after we created backend " src="https://github.com/user-attachments/assets/5843e33a-36c2-4d03-9ade-6f73104a724d" />
 
 5. Recources screenshot in azure. 
-# Recource Groups created after terrafrom apply.
+### Recource Groups created after terrafrom apply.
 <img width="1276" height="561" alt="rg created after terrafrom apply" src="https://github.com/user-attachments/assets/5394422c-0b90-41ad-9dc5-2967c65c13bf" />
-# resources under rg-aks-microservice ( ACR, AKS, Storage account )
-<img width="1563" height="655" alt="image" src="https://github.com/user-attachments/assets/77c33b8e-11a7-444e-ab19-e5fc69b010c7" />
 
+###  resources under rg-aks-microservice ( ACR, AKS, Storage account )
+<img width="1563" height="655" alt="image" src="https://github.com/user-attachments/assets/77c33b8e-11a7-444e-ab19-e5fc69b010c7" />
 
 ### Retrieve AKS Credentials
 
