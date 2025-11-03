@@ -29,7 +29,7 @@ This project demonstrates a complete end-to-end deployment of a Python microserv
 6. NGINX Ingress routes traffic to new pods
 7. Metrics and logs are collected by Prometheus and Loki
 8. Grafana displays monitoring data and logs
-9.Automated infrastructure provisioning with Terraform
+9. Automated infrastructure provisioning with Terraform
 
 ## Prerequisites
 
