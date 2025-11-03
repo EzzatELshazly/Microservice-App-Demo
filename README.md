@@ -127,6 +127,7 @@ cd terraform/
 terraform init
 ```
 <img width="1101" height="678" alt="terraform init" src="https://github.com/user-attachments/assets/f93bf3c8-9709-4e8c-86e2-4cd7c3c9b625" />
+
 ```bash
 terraform plan
 ```
