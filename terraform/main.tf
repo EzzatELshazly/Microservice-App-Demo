@@ -56,3 +56,25 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
   scope                            = azurerm_container_registry.acr.id
   skip_service_principal_aad_check = true
 }
+
+
+# Create a storage account for Terraform state
+resource "azurerm_storage_account" "tfstate" {
+  name                     = "terraformsatfstate"
+  resource_group_name      = azurerm_resource_group.aks_rg.name
+  location                 = azurerm_resource_group.aks_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = {
+    Environment = "Development"
+    Purpose     = "Terraform State Storage"
+  }
+}
+
+# Create a blob container for Terraform state
+resource "azurerm_storage_container" "tfstate" {
+  name                  = "tfstate"
+  storage_account_name  = azurerm_storage_account.tfstate.name
+  container_access_type = "private"
+}
