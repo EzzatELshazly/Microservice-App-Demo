@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
       - name: python-microservice
-        image: acrmicroservicepwc.azurecr.io/python-microservice:main-1ca07a0
+        image: acrmicroservicepwc.azurecr.io/python-microservice:main-f6d05b1
         ports:
         - containerPort: 5000
