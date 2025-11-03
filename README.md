@@ -125,17 +125,17 @@ Create the following files in the `terraform/` directory:
 ```bash
 cd terraform/
 terraform init
-
+```
 <img width="1101" height="678" alt="terraform init" src="https://github.com/user-attachments/assets/f93bf3c8-9709-4e8c-86e2-4cd7c3c9b625" />
-
+```bash
 terraform plan
-
+```
 <img width="1877" height="856" alt="terraform plan" src="https://github.com/user-attachments/assets/a4bda84b-a997-4224-8d11-232ced1caccc" />
 
+```bash
 terraform apply
-<img width="1867" height="922" alt="terraform apply" src="https://github.com/user-attachments/assets/d3bfe460-cda8-422c-99cb-c3e06d18cd15" />
-
 ```
+<img width="1867" height="922" alt="terraform apply" src="https://github.com/user-attachments/assets/d3bfe460-cda8-422c-99cb-c3e06d18cd15" />
 
 3. After resources are created, uncomment the backend block
 4. Reinitialize with state migration:
