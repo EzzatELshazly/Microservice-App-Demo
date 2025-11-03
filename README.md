@@ -16,6 +16,21 @@ This project demonstrates a complete end-to-end deployment of a Python microserv
 - **Certificate Management**: Cert-Manager with Let's Encrypt
 - **Monitoring**: Prometheus, Loki, Grafana
 
+<img width="6800" height="4567" alt="task drawio" src="https://github.com/user-attachments/assets/35ffb922-ae63-4db2-b80e-f464bd1a806f" />
+
+
+## Architecture Workflow
+
+1. Developer pushes code to main branch
+2. GitHub Actions builds Docker image and pushes to ACR
+3. GitHub Actions updates Kubernetes manifest with new image tag
+4. ArgoCD detects manifest change and syncs deployment
+5. New pods are deployed to AKS cluster
+6. NGINX Ingress routes traffic to new pods
+7. Metrics and logs are collected by Prometheus and Loki
+8. Grafana displays monitoring data and logs
+9.Automated infrastructure provisioning with Terraform
+
 ## Prerequisites
 
 ### Required Tools Installation
@@ -67,29 +82,8 @@ Verify authentication:
 ```bash
 az account show
 ```
+<img width="976" height="430" alt="image" src="https://github.com/user-attachments/assets/9f3010c7-104d-4065-8300-db70a8271f2b" />
 
-## Project Structure
-
-```
-.
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── provider.tf
-├── k8s/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   ├── namespace.yaml
-│   └── grafana-ingress.yaml
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yaml
-├── Dockerfile
-├── requirements.txt
-└── run.py
-```
 
 ## Phase 1: Dockerize the Application
 
@@ -122,9 +116,8 @@ Create the following files in the `terraform/` directory:
 - **outputs.tf**: Exports important values like kubeconfig, ACR credentials
 - **provider.tf**: Configures Azure provider and remote backend
 
-### Important: Terraform Initialization Order
-
-Due to the remote backend dependency, follow this specific initialization sequence:
+> [!Important]
+>  Terraform Initialization Order, Due to the remote backend dependency, follow this specific initialization sequence because You cannot use a remote backend until the storage account exists.
 
 1. Temporarily comment out the `backend "azurerm"` block in provider.tf
 2. Initialize and apply Terraform:
@@ -132,8 +125,16 @@ Due to the remote backend dependency, follow this specific initialization sequen
 ```bash
 cd terraform/
 terraform init
+
+<img width="1101" height="678" alt="terraform init" src="https://github.com/user-attachments/assets/f93bf3c8-9709-4e8c-86e2-4cd7c3c9b625" />
+
 terraform plan
+
+<img width="1877" height="856" alt="terraform plan" src="https://github.com/user-attachments/assets/a4bda84b-a997-4224-8d11-232ced1caccc" />
+
 terraform apply
+<img width="1867" height="922" alt="terraform apply" src="https://github.com/user-attachments/assets/d3bfe460-cda8-422c-99cb-c3e06d18cd15" />
+
 ```
 
 3. After resources are created, uncomment the backend block
@@ -142,6 +143,14 @@ terraform apply
 ```bash
 terraform init -migrate-state
 ```
+<img width="1406" height="758" alt="terraform after we created backend " src="https://github.com/user-attachments/assets/5843e33a-36c2-4d03-9ade-6f73104a724d" />
+
+5. Recources screenshot in azure. 
+# Recource Groups created after terrafrom apply.
+<img width="1276" height="561" alt="rg created after terrafrom apply" src="https://github.com/user-attachments/assets/5394422c-0b90-41ad-9dc5-2967c65c13bf" />
+# resources under rg-aks-microservice ( ACR, AKS, Storage account )
+<img width="1563" height="655" alt="image" src="https://github.com/user-attachments/assets/77c33b8e-11a7-444e-ab19-e5fc69b010c7" />
+
 
 ### Retrieve AKS Credentials
 
@@ -183,8 +192,6 @@ The service manifest creates:
 The ingress manifest configures:
 
 - NGINX ingress class
-- TLS termination with Let's Encrypt
-- Force SSL redirect
 - Domain routing
 
 ## Phase 4: GitOps with ArgoCD
@@ -197,6 +204,11 @@ Create ArgoCD namespace and install:
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
+### make sure that argo is installed correctly 
+```bash
+kubectl get all -n argocd
+```
+<img width="1806" height="972" alt="image" src="https://github.com/user-attachments/assets/b0d2d64d-a054-4f33-8a69-fd0718b233e0" />
 
 ### Expose ArgoCD Server
 
@@ -220,6 +232,8 @@ kubectl get svc argocd-server -n argocd
 ```
 
 Access ArgoCD UI using:
+<img width="1917" height="970" alt="image" src="https://github.com/user-attachments/assets/478b3188-21da-41d8-b5ac-32504f86feac" />
+
 - Username: admin
 - Password: (from previous command)
 
@@ -239,9 +253,9 @@ helm install nginx-ingress ingress-nginx/ingress-nginx \
 ### Verify Installation
 
 ```bash
-kubectl get pods -n ingress-nginx
-kubectl get svc -n ingress-nginx
+kubectl get all -n ingress-nginx
 ```
+<img width="1860" height="338" alt="image" src="https://github.com/user-attachments/assets/946421c3-57b6-457a-9e35-926f1ce4ba4f" />
 
 ## Phase 6: SSL Certificate Management
 
@@ -280,8 +294,10 @@ kubectl apply -f cluster-issuer.yaml
 ### Configure DNS
 
 1. Navigate to the NGINX Ingress Controller's public IP in Azure Portal
+<img width="1895" height="762" alt="image" src="https://github.com/user-attachments/assets/d929ca3f-cc89-44cb-90a8-7e2e2a99bf5f" />
 2. Go to Configuration section
-3. Create a DNS name label (e.g., pwc-pythontask)
+3. Create a DNS name label (e.g., pythontask)
+<img width="1883" height="583" alt="image" src="https://github.com/user-attachments/assets/79c825c7-b76d-449d-9d4d-cf02c25a4086" />
 4. The full domain will be: `{dns-label}.{region}.cloudapp.azure.com`
 
 ### Update Ingress for TLS
@@ -299,8 +315,12 @@ Sync in ArgoCD to apply changes.
 ```bash
 kubectl get certificate -n microservice
 ```
+<img width="992" height="78" alt="image" src="https://github.com/user-attachments/assets/3a8ee171-5ab6-4724-b703-7d4c01448644" />
 
 The application is now accessible via HTTPS.
+
+<img width="1542" height="704" alt="Screenshot (229)(1)" src="https://github.com/user-attachments/assets/9ad690fe-e3ec-4c1d-ba89-83106e30e5c0" />
+
 
 ## Phase 7: CI/CD Pipeline with GitHub Actions
 
@@ -330,15 +350,22 @@ The GitHub Actions workflow includes two jobs:
 - Sets up Docker Buildx
 - Builds and pushes image to ACR with tags
 
+### Navigate to acr in azure portal > services > Repositories 
+<img width="1857" height="750" alt="image" src="https://github.com/user-attachments/assets/3d8527d1-a2e1-488d-8054-b7b889ce0e33" />
+
 **Update Manifest Job:**
 
 - Checks out code with write permissions
 - Updates deployment.yaml with new image tag
 - Commits and pushes changes to trigger ArgoCD sync
 
+<img width="1447" height="52" alt="image" src="https://github.com/user-attachments/assets/828372ac-c66f-4bf7-9720-796c561d327f" />
+
 ### Workflow Triggers
 
 The pipeline runs automatically on push to the main branch.
+<img width="1877" height="562" alt="image" src="https://github.com/user-attachments/assets/125b4e29-7303-4c93-a3c5-0165da6ceb01" />
+
 
 ## Phase 8: Monitoring Stack
 
@@ -384,6 +411,35 @@ Create a values file for Grafana with:
 - Pre-configured datasources for Prometheus and Loki
 - Persistence disabled for simplicity
 
+then Install Grafana with Pre-configured Datasources loki and promethoius
+vim values grafana-values.yaml
+```bash
+service:
+  type: ClusterIP
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server
+      access: proxy
+      isDefault: true
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+      isDefault: false
+
+persistence:
+  enabled: false
+
+admin:
+  existingSecret: ""
+  userKey: admin-user
+  passwordKey: admin-password
+```
 Install Grafana:
 
 ```bash
@@ -421,11 +477,19 @@ kubectl get secret grafana -n monitoring -o jsonpath="{.data.admin-password}" | 
 echo
 ```
 
+
 ### Access Grafana
 
 - URL: https://pwc-pythontask.northeurope.cloudapp.azure.com/grafana
 - Username: admin
 - Password: (from previous command)
+
+<img width="1711" height="868" alt="image" src="https://github.com/user-attachments/assets/10b7a345-bc04-4949-b550-39a9102afa9e" />
+
+> [!Note]
+>  when you access now grafana under connections click on data sources you will see loki and Prometheus already configred.
+<img width="1915" height="602" alt="image" src="https://github.com/user-attachments/assets/5a4a5d83-f5c7-4d00-8128-39342ef6d752" />
+
 
 ### Import Pre-built Dashboards
 
@@ -449,16 +513,12 @@ Import the following dashboards in Grafana:
 - Dashboard ID: 15141
 - Select Prometheus datasource
 
-## Deployment Workflow
+### Logs for the App
+<img width="1893" height="723" alt="image" src="https://github.com/user-attachments/assets/a26832e9-25ac-45d5-bca9-90f516b4bc04" />
 
-1. Developer pushes code to main branch
-2. GitHub Actions builds Docker image and pushes to ACR
-3. GitHub Actions updates Kubernetes manifest with new image tag
-4. ArgoCD detects manifest change and syncs deployment
-5. New pods are deployed to AKS cluster
-6. NGINX Ingress routes traffic to new pods
-7. Metrics and logs are collected by Prometheus and Loki
-8. Grafana displays monitoring data and logs
+### k8s Cluster metrics utlization
+<img width="1897" height="862" alt="image" src="https://github.com/user-attachments/assets/3e8a84e0-7292-445c-9308-5220df6f4f04" />
+
 
 ## Key Features
 
@@ -477,7 +537,6 @@ Import the following dashboards in Grafana:
 - TLS encryption for all external traffic
 - Private container registry access via role assignments
 - Network policies enabled on AKS cluster
-- Kubernetes RBAC for access control
 - Automated certificate renewal with cert-manager
 
 ## Scaling
@@ -494,52 +553,7 @@ Deployments can be scaled manually:
 kubectl scale deployment python-microservice -n microservice --replicas=3
 ```
 
-## Troubleshooting
-
-### Check Pod Status
-
-```bash
-kubectl get pods -n microservice
-kubectl describe pod <pod-name> -n microservice
-kubectl logs <pod-name> -n microservice
-```
-
-### Check Ingress
-
-```bash
-kubectl get ingress -n microservice
-kubectl describe ingress python-microservice-ingress -n microservice
-```
-
-### Check Certificate
-
-```bash
-kubectl get certificate -n microservice
-kubectl describe certificate pwc-python-cert -n microservice
-```
-
-### Check ArgoCD Application
-
-```bash
-argocd app get <app-name>
-argocd app sync <app-name>
-```
-
-## Cleanup
-
-To destroy all resources:
-
-```bash
-cd terraform/
-terraform destroy
-```
-
-Note: Manually delete the DNS configuration from Azure Portal if created.
-
-## License
-
-This project is for demonstration purposes.
-
-## Author
-
-PWC Microservice Demonstration Project
+## Conclusion
+This project demonstrates a production-ready microservice deployment leveraging modern DevOps practices and cloud-native technologies. By combining Infrastructure as Code with Terraform, GitOps with ArgoCD, and automated CI/CD pipelines, we achieve a fully automated deployment workflow that minimizes manual intervention and reduces the risk of human error.
+The implementation showcases key principles of cloud-native architecture including containerization, orchestration, automated scaling, secure networking, and comprehensive observability. The monitoring stack with Prometheus, Loki, and Grafana provides complete visibility into application performance and system health, enabling proactive issue detection and resolution.
+This architecture is scalable, maintainable, and follows industry best practices for security and reliability. The GitOps approach ensures that infrastructure and application state are version-controlled and auditable, while the automated CI/CD pipeline enables rapid and consistent deployments.
