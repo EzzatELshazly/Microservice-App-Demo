@@ -150,7 +150,7 @@ terraform init -migrate-state
 ### Recource Groups created after terrafrom apply.
 <img width="1276" height="561" alt="rg created after terrafrom apply" src="https://github.com/user-attachments/assets/5394422c-0b90-41ad-9dc5-2967c65c13bf" />
 
-###  resources under rg-aks-microservice ( ACR, AKS, Storage account )
+###  Resources under rg-aks-microservice ( ACR, AKS, Storage account )
 <img width="1563" height="655" alt="image" src="https://github.com/user-attachments/assets/77c33b8e-11a7-444e-ab19-e5fc69b010c7" />
 
 ### Retrieve AKS Credentials
@@ -205,7 +205,7 @@ Create ArgoCD namespace and install:
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
-### make sure that argo is installed correctly 
+### Make sure that argo is installed correctly 
 ```bash
 kubectl get all -n argocd
 ```
@@ -309,7 +309,6 @@ The ingress manifest includes:
 - TLS section with host and secret name
 - Force SSL redirect annotation
 
-Sync in ArgoCD to apply changes.
 
 ### Verify Certificate
 
@@ -319,9 +318,37 @@ kubectl get certificate -n microservice
 <img width="992" height="78" alt="image" src="https://github.com/user-attachments/assets/3a8ee171-5ab6-4724-b703-7d4c01448644" />
 
 The application is now accessible via HTTPS.
+### Browse to your domain.
+pwc-pythontask.northeurope.cloudapp.azure.com
 
 <img width="1542" height="704" alt="Screenshot (229)(1)" src="https://github.com/user-attachments/assets/9ad690fe-e3ec-4c1d-ba89-83106e30e5c0" />
 
+### Create ArgoCD App
+In ArgoCD UI → New App:
+- Repo URL: your GitHub repo
+- Path: k8s
+- Cluster: your AKS cluster
+- Namespace: default
+- Sync Policy: Automatic
+
+### or apply mainifest file 
+```bash
+project: default
+source:
+  repoURL: https://github.com/EzzatELshazly/Microservice-App-Demo.git
+  path: k8s
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+    enabled: true
+```
+
+## Sync in ArgoCD to apply all changes or trigger the pipeline.
+<img width="1895" height="845" alt="image" src="https://github.com/user-attachments/assets/ba6debb8-cf58-4277-97ac-c669870923b2" />
 
 ## Phase 7: CI/CD Pipeline with GitHub Actions
 
