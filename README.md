@@ -309,7 +309,6 @@ The ingress manifest includes:
 - TLS section with host and secret name
 - Force SSL redirect annotation
 
-Sync in ArgoCD to apply changes.
 
 ### Verify Certificate
 
@@ -322,6 +321,32 @@ The application is now accessible via HTTPS.
 
 <img width="1542" height="704" alt="Screenshot (229)(1)" src="https://github.com/user-attachments/assets/9ad690fe-e3ec-4c1d-ba89-83106e30e5c0" />
 
+### Create ArgoCD App
+In ArgoCD UI → New App:
+- Repo URL: your GitHub repo
+- Path: k8s
+- Cluster: your AKS cluster
+- Namespace: default
+- Sync Policy: Automatic
+
+### or apply mainifest file 
+```bash
+project: default
+source:
+  repoURL: https://github.com/EzzatELshazly/Microservice-App-Demo.git
+  path: k8s
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+    enabled: true
+```
+
+## Sync in ArgoCD to apply all changes or trigger the pipeline.
+<img width="1895" height="845" alt="image" src="https://github.com/user-attachments/assets/ba6debb8-cf58-4277-97ac-c669870923b2" />
 
 ## Phase 7: CI/CD Pipeline with GitHub Actions
 
